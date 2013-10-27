@@ -38,6 +38,7 @@
 //
 package session_notifications
 
+// #cgo LDFLAGS: -lwtsapi32
 /*
 #include <windows.h>
 extern HANDLE Start();
