@@ -61,7 +61,8 @@ const (
 )
 
 var (
-	changes = make(chan int, 1000)
+	changes        = make(chan int, 1000)
+	chanSessionEnd = make(chan int, 1000)
 )
 
 //export sessionChange
@@ -69,9 +70,15 @@ func sessionChange(value int) {
 	changes <- value
 }
 
+//export sessionEnd
+func sessionEnd() {
+	chanSessionEnd <- 1
+}
+
 // Subscribe will make it so that subChan will receive the session events.
+// chanSessionEnd will receive a '1' when the session ends (when Windows shut down)
 // To unsubscribe, close closeChan
-func Subscribe(subChan chan int, closeChan chan int) {
+func Subscribe(subChan chan int, subChanSessionEnd chan int, closeChan chan int) {
 	var threadHandle C.HANDLE
 	go func() {
 		for {
@@ -81,6 +88,8 @@ func Subscribe(subChan chan int, closeChan chan int) {
 				return
 			case c := <-changes:
 				subChan <- c
+			case c := <-chanSessionEnd:
+				subChanSessionEnd <- c
 			}
 		}
 	}()

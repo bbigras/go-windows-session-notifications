@@ -7,6 +7,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     int wmId, wmEvent;
     switch (message)
     {
+    case WM_QUERYENDSESSION:
+        sessionEnd();
+        break;
     case WM_WTSSESSION_CHANGE:
         sessionChange(wParam);
         break;
