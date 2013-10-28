@@ -13,24 +13,29 @@
 //     func main() {
 //     	quit := make(chan int)
 //
-//     	changes := make(chan int, 100)
-//     	closeChan := make(chan int)
+//     	chanMessages := make(chan session_notifications.Message, 100)
+//     	chanClose := make(chan int)
 //
 //     	go func() {
 //     		for {
 //     			select {
-//     			case c := <-changes:
-//     				switch c {
-//     				case session_notifications.WTS_SESSION_LOCK:
-//     					log.Println("session locked")
-//     				case session_notifications.WTS_SESSION_UNLOCK:
-//     					log.Println("session unlocked")
+//     			case m := <-chanMessages:
+//     				switch m.UMsg {
+//     				case session_notifications.WM_WTSSESSION_CHANGE:
+//     					switch m.Param {
+//     					case session_notifications.WTS_SESSION_LOCK:
+//     						log.Println("session locked")
+//     					case session_notifications.WTS_SESSION_UNLOCK:
+//     						log.Println("session unlocked")
+//     					}
+//     				case session_notifications.WM_QUERYENDSESSION:
+//     					log.Println("log off or shutdown")
 //     				}
 //     			}
 //     		}
 //     	}()
 //
-//     	session_notifications.Subscribe(changes, closeChan)
+//     	session_notifications.Subscribe(chanMessages, chanClose)
 //
 //     	// ctrl+c to quit
 //     	<-quit
@@ -59,27 +64,36 @@ const (
 	WTS_SESSION_REMOTE_CONTROL = 0x9
 	WTS_SESSION_CREATE         = 0xA
 	WTS_SESSION_TERMINATE      = 0xB
+
+	WM_QUERYENDSESSION   = 0x11
+	WM_WTSSESSION_CHANGE = 0x2B1
+
+	ENDSESSION_CLOSEAPP = 0x00000001
+	ENDSESSION_CRITICAL = 0x40000000
+	ENDSESSION_LOGOFF   = 0x80000000
 )
 
-var (
-	changes        = make(chan int, 1000)
-	chanSessionEnd = make(chan int, 1000)
-)
-
-//export sessionChange
-func sessionChange(value int) {
-	changes <- value
+type Message struct {
+	UMsg  int
+	Param int
 }
 
-//export sessionEnd
-func sessionEnd() {
-	chanSessionEnd <- 1
+var (
+	chanMessages = make(chan Message, 1000)
+)
+
+//export relayMessage
+func relayMessage(message C.uint, wParam C.uint) {
+	chanMessages <- Message{
+		UMsg:  int(message),
+		Param: int(wParam),
+	}
 }
 
 // Subscribe will make it so that subChan will receive the session events.
 // chanSessionEnd will receive a '1' when the session ends (when Windows shut down)
 // To unsubscribe, close closeChan
-func Subscribe(subChan chan int, subChanSessionEnd chan int, closeChan chan int) {
+func Subscribe(subchanMessages chan Message, closeChan chan int) {
 	var threadHandle C.HANDLE
 	go func() {
 		for {
@@ -87,10 +101,8 @@ func Subscribe(subChan chan int, subChanSessionEnd chan int, closeChan chan int)
 			case <-closeChan:
 				C.Stop(threadHandle)
 				return
-			case c := <-changes:
-				subChan <- c
-			case c := <-chanSessionEnd:
-				subChanSessionEnd <- c
+			case c := <-chanMessages:
+				subchanMessages <- c
 			}
 		}
 	}()
