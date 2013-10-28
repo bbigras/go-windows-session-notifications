@@ -57,7 +57,6 @@ void Stop(HANDLE hndl) {
     // PostThreadMessage(hndl, WM_QUIT, 0, 0);
     // WaitForSingleObject(hndl, 5000);
     TerminateThread(hndl, 0);
-    CloseHandle(hndl);
 }
 
 HANDLE Start() {

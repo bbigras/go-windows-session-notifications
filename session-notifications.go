@@ -51,6 +51,10 @@ extern void Stop(HANDLE);
 */
 import "C"
 
+import (
+	"syscall"
+)
+
 // http://msdn.microsoft.com/en-us/library/aa383828(v=vs.85).aspx
 const (
 	WTS_CONSOLE_CONNECT        = 0x1
@@ -80,6 +84,9 @@ type Message struct {
 
 var (
 	chanMessages = make(chan Message, 1000)
+
+	kernel32    = syscall.MustLoadDLL("kernel32.dll")
+	CloseHandle = kernel32.MustFindProc("CloseHandle")
 )
 
 //export relayMessage
@@ -100,6 +107,11 @@ func Subscribe(subchanMessages chan Message, closeChan chan int) {
 			select {
 			case <-closeChan:
 				C.Stop(threadHandle)
+				r, _, err := CloseHandle.Call(uintptr(threadHandle))
+				if r == 0 {
+					panic(err)
+				}
+
 				return
 			case c := <-chanMessages:
 				subchanMessages <- c
