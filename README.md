@@ -39,11 +39,13 @@ func main() {
 }
 ```
 
-Build with :
+##Build with##
 
-    set CGO_LDFLAGS=-lwtsapi32
+```bash
+set CGO_LDFLAGS=-lwtsapi32
 
-    # with powershell
-    $env:CGO_LDFLAGS="-lwtsapi32";
+# with powershell
+$env:CGO_LDFLAGS="-lwtsapi32";
 
-    go build
+go build
+```
