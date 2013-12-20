@@ -78,8 +78,9 @@ const (
 )
 
 type Message struct {
-	UMsg  int
-	Param int
+	UMsg   int
+	Param  int
+	ChanOk chan int
 }
 
 var (
@@ -91,10 +92,17 @@ var (
 
 //export relayMessage
 func relayMessage(message C.uint, wParam C.uint) {
-	chanMessages <- Message{
+	msg := Message{
 		UMsg:  int(message),
 		Param: int(wParam),
 	}
+	msg.ChanOk = make(chan int)
+
+	chanMessages <- msg
+
+	// wait for the app to do it's thing
+	// it's usefull for WM_QUERYENDSESSION if we need time to save before Windows shutdown
+	<-msg.ChanOk
 }
 
 // Subscribe will make it so that subChan will receive the session events.
