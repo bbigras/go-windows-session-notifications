@@ -31,6 +31,7 @@
 //     				case session_notifications.WM_QUERYENDSESSION:
 //     					log.Println("log off or shutdown")
 //     				}
+//     				close(m.ChanOk)
 //     			}
 //     		}
 //     	}()
@@ -108,6 +109,7 @@ func relayMessage(message C.uint, wParam C.uint) {
 // Subscribe will make it so that subChan will receive the session events.
 // chanSessionEnd will receive a '1' when the session ends (when Windows shut down)
 // To unsubscribe, close closeChan
+// You must close 'ChanOk' after processing the event. This channel is to give you time to save if the event is WM_QUERYENDSESSION
 func Subscribe(subchanMessages chan Message, closeChan chan int) {
 	var threadHandle C.HANDLE
 	go func() {
