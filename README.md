@@ -28,6 +28,7 @@ func main() {
 				case session_notifications.WTS_SESSION_UNLOCK:
 					log.Println("session unlocked")
 				}
+				close(m.ChanOk)
 			}
 		}
 	}()
