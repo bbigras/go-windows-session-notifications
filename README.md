@@ -1,8 +1,8 @@
-#go-windows-session-notifications#
+# go-windows-session-notifications
 
 Receive session change notifications from Windows.
 
-##Sample code##
+## Sample code
 
 ```go
 package main
@@ -40,7 +40,7 @@ func main() {
 }
 ```
 
-##Build with##
+## Build with
 
 ```bash
 set CGO_LDFLAGS=-lwtsapi32
